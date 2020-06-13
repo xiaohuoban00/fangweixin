@@ -14,13 +14,13 @@ import com.github.tobato.fastdfs.domain.StorePath;
 import com.github.tobato.fastdfs.exception.FdfsUnsupportStorePathException;
 import com.github.tobato.fastdfs.service.FastFileStorageClient;
 
-import javax.annotation.Resource;
-
 @Component
 public class FastDFSClient {
 
 	@Autowired
 	private FastFileStorageClient storageClient;
+
+	private final String IMAGE_URL = "http://116.62.102.68:8888/";
 
 
 	/**
@@ -34,36 +34,35 @@ public class FastDFSClient {
 	public String uploadFile(MultipartFile file) throws IOException {
 		StorePath storePath = storageClient.uploadFile(file.getInputStream(), file.getSize(),
 				FilenameUtils.getExtension(file.getOriginalFilename()), null);
-		
-		return storePath.getPath();
+		return IMAGE_URL+storePath.getPath();
 	}
 	
 	public String uploadFile2(MultipartFile file) throws IOException {
 		StorePath storePath = storageClient.uploadImageAndCrtThumbImage(file.getInputStream(), file.getSize(),
 				FilenameUtils.getExtension(file.getOriginalFilename()), null);
 
-		return storePath.getPath();
+		return IMAGE_URL+storePath.getPath();
 	}
 	
 	public String uploadQRCode(MultipartFile file) throws IOException {
 		StorePath storePath = storageClient.uploadFile(file.getInputStream(), file.getSize(),
 				"png", null);
 		
-		return storePath.getPath();
+		return IMAGE_URL+storePath.getPath();
 	}
 	
 	public String uploadFace(MultipartFile file) throws IOException {
 		StorePath storePath = storageClient.uploadImageAndCrtThumbImage(file.getInputStream(), file.getSize(),
 				"png", null);
 		
-		return storePath.getPath();
+		return IMAGE_URL+storePath.getPath();
 	}
 	
 	public String uploadBase64(MultipartFile file) throws IOException {
 		StorePath storePath = storageClient.uploadImageAndCrtThumbImage(file.getInputStream(), file.getSize(),
 				"png", null);
 		
-		return storePath.getPath();
+		return IMAGE_URL+storePath.getPath();
 	}
 	
 	/**
@@ -78,7 +77,7 @@ public class FastDFSClient {
 		byte[] buff = content.getBytes(Charset.forName("UTF-8"));
 		ByteArrayInputStream stream = new ByteArrayInputStream(buff);
 		StorePath storePath = storageClient.uploadFile(stream, buff.length, fileExtension, null);
-		return storePath.getPath();
+		return IMAGE_URL+storePath.getPath();
 	}
 
 	// 封装图片完整URL地址

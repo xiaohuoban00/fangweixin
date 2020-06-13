@@ -26,7 +26,7 @@ public class ChatMsg {
     private Integer signFlag;
 
     /**
-     * 发送请求的事件
+     * 发送请求的时间
      */
     @Column(name = "create_time")
     private LocalDateTime createTime;

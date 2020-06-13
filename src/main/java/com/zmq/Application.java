@@ -1,11 +1,9 @@
 package com.zmq;
 
-import com.github.tobato.fastdfs.FdfsClientConfig;
+
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.EnableMBeanExport;
-import org.springframework.context.annotation.Import;
-import org.springframework.jmx.support.RegistrationPolicy;
+import org.springframework.transaction.annotation.EnableTransactionManagement;
 import tk.mybatis.spring.annotation.MapperScan;
 
 /**
@@ -15,7 +13,8 @@ import tk.mybatis.spring.annotation.MapperScan;
  * @Date 2020/6/12 11:09
  */
 @SpringBootApplication
-@MapperScan(basePackages = "com.zmq.mapper")
+@MapperScan("com.zmq.mapper")
+@EnableTransactionManagement
 public class Application {
     public static void main(String[] args) {
         SpringApplication.run(Application.class,args);

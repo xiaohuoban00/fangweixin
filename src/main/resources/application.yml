@@ -4,10 +4,11 @@ mybatis:
   configuration:
     map-underscore-to-camel-case: true
   type-aliases-package: com.zmq.pojo
+  mapper-locations: classpath*:mapper/*.xml
 spring:
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/xzyp?user=root&password=123456&useUnicode=true&characterEncoding=gbk&autoReconnect=true&failOverReadOnly=false&useSSL=false
+    url: jdbc:mysql://localhost:3306/weixin-dev?characterEncoding=utf8&useSSL=false&serverTimezone=Asia/Shanghai&allowPublicKeyRetrieval=true
     hikari:
       connection-timeout: 30000
       minimum-idle: 5
@@ -16,6 +17,8 @@ spring:
       idle-timeout: 600000
       max-lifetime: 28740000
       connection-test-query: SELECT 1
+    username: root
+    password: 1234
 fdfs:
   so-timeout: 1501
   connect-timeout: 601

@@ -13,6 +13,7 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 import tk.mybatis.mapper.entity.Example;
 
+import java.io.File;
 import java.io.IOException;
 
 /**
@@ -50,7 +51,7 @@ public class UserService {
         String userId = Sid.nextShort();
         // 为每个用户生成一个唯一的二维码
         String qrCodePath = "C://user" + userId + "qrcode.png";
-        qrCodeUtils.createQRCode(qrCodePath, "muxin_qrcode:" + user.getUsername());
+        qrCodeUtils.createQRCode(qrCodePath, "userId:" + userId);
         MultipartFile qrCodeFile = FileUtils.fileToMultipart(qrCodePath);
         String qrCodeUrl = "";
         try {
@@ -58,6 +59,8 @@ public class UserService {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        File file = new File(qrCodePath);
+        file.delete();
         user.setQrcode(qrCodeUrl);
         user.setId(userId);
         userMapper.insert(user);
