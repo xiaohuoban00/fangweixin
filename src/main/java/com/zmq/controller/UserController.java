@@ -4,10 +4,7 @@ import com.zmq.pojo.User;
 import com.zmq.pojo.bo.UserBO;
 import com.zmq.pojo.vo.UsersVO;
 import com.zmq.service.UserService;
-import com.zmq.utils.FastDFSClient;
-import com.zmq.utils.FileUtils;
-import com.zmq.utils.JSONResult;
-import com.zmq.utils.MD5Utils;
+import com.zmq.utils.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,6 +13,8 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+
+import java.io.File;
 
 /**
  * Created by IntelliJ IDEA.
@@ -63,19 +62,27 @@ public class UserController {
     }
 
     @PostMapping("uploadFaceBase64")
-    public JSONResult uploadFaceBase64(UserBO userBO) throws Exception {
+    public JSONResult uploadFaceBase64(@RequestBody UserBO userBO) throws Exception {
         String faceData = userBO.getFaceData();
-        String userFacePath = "C:\\"+ userBO.getUserId()+"base64.png";
+        String userFacePath = "D:\\image\\"+ userBO.getUserId()+"base64.png";
         FileUtils.base64ToFile(userFacePath,faceData);
         MultipartFile multipartFile = FileUtils.fileToMultipart(userFacePath);
-        String url = fastDFSClient.uploadBase64(multipartFile);
-        String thump = "_150X150.";
-        String[] arr = url.split("\\.");
-        String thumpImgUrl = arr[0]+thump+arr[1];
+        Image image = fastDFSClient.uploadFile(multipartFile);
+        File file = new File(userFacePath);
+        file.delete();
         User user = new User();
         user.setId(userBO.getUserId());
-        user.setFaceImage(thumpImgUrl);
-        user.setFaceImageBig(url);
+        user.setFaceImageBig(image.getFullPath());
+        user.setFaceImage(image.getThumbPath());
+        userService.update(user);
+        return JSONResult.ok(userService.findById(user.getId()));
+    }
+
+    @PostMapping("update")
+    public JSONResult update(@RequestBody UserBO userBO){
+        User user = new User();
+        user.setId(userBO.getUserId());
+        user.setNickname(userBO.getNickname());
         userService.update(user);
         return JSONResult.ok(userService.findById(user.getId()));
     }

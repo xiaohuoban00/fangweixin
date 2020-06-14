@@ -4,6 +4,7 @@ import com.zmq.mapper.UserMapper;
 import com.zmq.pojo.User;
 import com.zmq.utils.FastDFSClient;
 import com.zmq.utils.FileUtils;
+import com.zmq.utils.Image;
 import com.zmq.utils.QRCodeUtils;
 import org.n3r.idworker.Sid;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -47,21 +48,16 @@ public class UserService {
         return userMapper.selectOneByExample(userExample);
     }
 
-    public User save(User user) {
+    public User save(User user) throws IOException {
         String userId = Sid.nextShort();
         // 为每个用户生成一个唯一的二维码
-        String qrCodePath = "C://user" + userId + "qrcode.png";
+        String qrCodePath = "D:\\image\\" + userId + "qrcode.png";
         qrCodeUtils.createQRCode(qrCodePath, "userId:" + userId);
         MultipartFile qrCodeFile = FileUtils.fileToMultipart(qrCodePath);
-        String qrCodeUrl = "";
-        try {
-            qrCodeUrl = fastDFSClient.uploadQRCode(qrCodeFile);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        Image image = fastDFSClient.uploadFile(qrCodeFile);
         File file = new File(qrCodePath);
         file.delete();
-        user.setQrcode(qrCodeUrl);
+        user.setQrcode(image.getFullPath());
         user.setId(userId);
         userMapper.insert(user);
         return user;

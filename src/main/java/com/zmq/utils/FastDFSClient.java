@@ -1,9 +1,12 @@
 package com.zmq.utils;
 
 import java.io.ByteArrayInputStream;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.nio.charset.Charset;
 
+import com.github.tobato.fastdfs.domain.ThumbImageConfig;
 import org.apache.commons.io.FilenameUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,6 +23,9 @@ public class FastDFSClient {
 	@Autowired
 	private FastFileStorageClient storageClient;
 
+	@Autowired
+	private ThumbImageConfig thumbImageConfig;
+
 	private final String IMAGE_URL = "http://116.62.102.68:8888/";
 
 
@@ -31,10 +37,13 @@ public class FastDFSClient {
 	 * @return 文件访问地址
 	 * @throws IOException
 	 */
-	public String uploadFile(MultipartFile file) throws IOException {
-		StorePath storePath = storageClient.uploadFile(file.getInputStream(), file.getSize(),
-				FilenameUtils.getExtension(file.getOriginalFilename()), null);
-		return IMAGE_URL+storePath.getPath();
+	public Image uploadFile(MultipartFile file) throws IOException {
+		// 上传并且生成缩略图
+		StorePath storePath = this.storageClient.uploadImageAndCrtThumbImage(
+				file.getInputStream(), file.getSize(), "png", null);
+		// 获取缩略图路径
+		String path = thumbImageConfig.getThumbImagePath(storePath.getFullPath());
+		return new Image(IMAGE_URL+storePath.getFullPath(),IMAGE_URL+path);
 	}
 	
 	public String uploadFile2(MultipartFile file) throws IOException {
