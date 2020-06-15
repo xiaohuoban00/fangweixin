@@ -8,7 +8,6 @@
     <artifactId>fangweixin</artifactId>
     <version>1.0-SNAPSHOT</version>
     <packaging>jar</packaging>
-    <!--阿里云搭建了一个国内镜像http://maven.aliyun.com，跑起来速度很快，可以进行配置-->
     <repositories>
         <repository>
             <id>nexus-aliyun</id>

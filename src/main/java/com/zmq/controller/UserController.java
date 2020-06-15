@@ -1,17 +1,15 @@
 package com.zmq.controller;
 
+import com.zmq.enums.SearchFriendsStatusEnum;
 import com.zmq.pojo.User;
 import com.zmq.pojo.bo.UserBO;
-import com.zmq.pojo.vo.UsersVO;
+import com.zmq.pojo.vo.UserVO;
 import com.zmq.service.UserService;
 import com.zmq.utils.*;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
@@ -31,6 +29,13 @@ public class UserController {
     @Autowired
     private FastDFSClient fastDFSClient;
 
+    /**
+     * 注册或登录
+     *
+     * @param user
+     * @return
+     * @throws Exception
+     */
     @PostMapping("registerOrLogin")
     public JSONResult registerOrLogin(@RequestBody User user) throws Exception {
         // 0. 判断用户名和密码不能为空
@@ -41,7 +46,7 @@ public class UserController {
         // 1. 判断用户名是否存在，如果存在就登录，如果不存在则注册
         User findUser = userService.findByUsername(user.getUsername());
         User userResult;
-        if (findUser!=null) {
+        if (findUser != null) {
             // 1.1 登录
             userResult = userService.findByUsernameAndPassword(user.getUsername(),
                     MD5Utils.getMD5Str(user.getPassword()));
@@ -56,34 +61,76 @@ public class UserController {
             user.setPassword(MD5Utils.getMD5Str(user.getPassword()));
             userResult = userService.save(user);
         }
-        UsersVO userVO = new UsersVO();
+        UserVO userVO = new UserVO();
         BeanUtils.copyProperties(userResult, userVO);
         return JSONResult.ok(userVO);
     }
 
+    /**
+     * 上传头像
+     *
+     * @param userBO
+     * @return
+     * @throws Exception
+     */
     @PostMapping("uploadFaceBase64")
     public JSONResult uploadFaceBase64(@RequestBody UserBO userBO) throws Exception {
         String faceData = userBO.getFaceData();
-        String userFacePath = "D:\\image\\"+ userBO.getUserId()+"base64.png";
-        FileUtils.base64ToFile(userFacePath,faceData);
-        MultipartFile multipartFile = FileUtils.fileToMultipart(userFacePath);
-        Image image = fastDFSClient.uploadFile(multipartFile);
+        String userFacePath = "E:\\image\\";
+        String fileName = userBO.getUserId() + "base64.png";
         File file = new File(userFacePath);
+        if(!file.exists()){
+            file.mkdir();
+        }
+        FileUtils.base64ToFile(userFacePath+fileName, faceData);
+        MultipartFile multipartFile = FileUtils.fileToMultipart(userFacePath+fileName);
+        Image image = fastDFSClient.uploadFile(multipartFile);
         file.delete();
         User user = new User();
         user.setId(userBO.getUserId());
         user.setFaceImageBig(image.getFullPath());
         user.setFaceImage(image.getThumbPath());
         userService.update(user);
-        return JSONResult.ok(userService.findById(user.getId()));
+        User findUser = userService.findById(user.getId());
+        UserVO userVO = new UserVO();
+        BeanUtils.copyProperties(findUser,userVO);
+        return JSONResult.ok(userVO);
     }
 
+    /**
+     * 更新用户
+     *
+     * @param userBO
+     * @return
+     */
     @PostMapping("update")
-    public JSONResult update(@RequestBody UserBO userBO){
+    public JSONResult update(@RequestBody UserBO userBO) {
         User user = new User();
         user.setId(userBO.getUserId());
         user.setNickname(userBO.getNickname());
         userService.update(user);
         return JSONResult.ok(userService.findById(user.getId()));
+    }
+
+
+    /**
+     * 搜索好友
+     * @param id
+     * @param username
+     * @return
+     */
+    @PostMapping("searchUser")
+    public JSONResult searchUser(String id,String username) {
+        if (StringUtils.isBlank(id) || StringUtils.isBlank(username)) {
+            return JSONResult.errorMsg("");
+        }
+        Integer status = userService.preconditionSearchFriends(id,username);
+        if(status.equals(SearchFriendsStatusEnum.SUCCESS.status)){
+            User user = userService.findByUsername(username);
+            UserVO userVO = new UserVO();
+            BeanUtils.copyProperties(user,userVO);
+            return JSONResult.ok(userVO);
+        }
+        return JSONResult.errorMsg(SearchFriendsStatusEnum.getMsgByKey(status));
     }
 }

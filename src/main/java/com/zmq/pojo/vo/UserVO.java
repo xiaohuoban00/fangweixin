@@ -2,7 +2,7 @@ package com.zmq.pojo.vo;
 
 import java.util.List;
 
-public class UsersVO {
+public class UserVO {
     private String id;
     private String username;
     private String faceImage;

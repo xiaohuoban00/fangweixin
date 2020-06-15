@@ -1,11 +1,15 @@
 package com.zmq.service;
 
+import com.zmq.enums.SearchFriendsStatusEnum;
+import com.zmq.mapper.MyFriendsMapper;
 import com.zmq.mapper.UserMapper;
+import com.zmq.pojo.MyFriends;
 import com.zmq.pojo.User;
 import com.zmq.utils.FastDFSClient;
 import com.zmq.utils.FileUtils;
 import com.zmq.utils.Image;
 import com.zmq.utils.QRCodeUtils;
+import org.apache.commons.collections.CollectionUtils;
 import org.n3r.idworker.Sid;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,6 +20,7 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -24,7 +29,7 @@ import java.io.IOException;
  * @Date 2020/6/12 14:11
  */
 @Service
-@Transactional(propagation = Propagation.REQUIRED)
+@Transactional
 public class UserService {
 
     @Autowired
@@ -33,6 +38,8 @@ public class UserService {
     private QRCodeUtils qrCodeUtils;
     @Autowired
     private FastDFSClient fastDFSClient;
+    @Autowired
+    private MyFriendsMapper myFriendsMapper;
 
     public User findByUsername(String username) {
         User user = new User();
@@ -51,12 +58,15 @@ public class UserService {
     public User save(User user) throws IOException {
         String userId = Sid.nextShort();
         // 为每个用户生成一个唯一的二维码
-        String qrCodePath = "D:\\image\\" + userId + "qrcode.png";
-        qrCodeUtils.createQRCode(qrCodePath, "userId:" + userId);
-        MultipartFile qrCodeFile = FileUtils.fileToMultipart(qrCodePath);
-        Image image = fastDFSClient.uploadFile(qrCodeFile);
+        String qrCodePath = "E:\\image\\";
+        String fileName = userId + "qrcode.png";
         File file = new File(qrCodePath);
-        file.delete();
+        if(!file.exists()){
+            file.mkdir();
+        }
+        qrCodeUtils.createQRCode(qrCodePath+fileName, "userId:" + userId);
+        MultipartFile qrCodeFile = FileUtils.fileToMultipart(qrCodePath+fileName);
+        Image image = fastDFSClient.uploadFile(qrCodeFile);
         user.setQrcode(image.getFullPath());
         user.setId(userId);
         userMapper.insert(user);
@@ -70,4 +80,30 @@ public class UserService {
     public User findById(String id){
         return userMapper.selectByPrimaryKey(id);
     }
+
+    /**
+     * 搜索好友的前置条件
+     * @param id
+     * @param username
+     * @return
+     */
+    public Integer preconditionSearchFriends(String id, String username) {
+        User user = findByUsername(username);
+        if(user==null){
+            return SearchFriendsStatusEnum.USER_NOT_EXIST.status;
+        }
+        User myUser = userMapper.selectByPrimaryKey(id);
+        if(myUser.getId().equals(user.getId())){
+            return SearchFriendsStatusEnum.NOT_YOURSELF.status;
+        }
+        MyFriends myFriends = new MyFriends();
+        myFriends.setMyFriendUserId(user.getId());
+        myFriends.setMyUserId(id);
+        List<MyFriends> myFriendsList = myFriendsMapper.select(myFriends);
+        if(CollectionUtils.isNotEmpty(myFriendsList)){
+            return SearchFriendsStatusEnum.ALREADY_FRIENDS.status;
+        }
+        return SearchFriendsStatusEnum.SUCCESS.status;
+    }
+
 }
