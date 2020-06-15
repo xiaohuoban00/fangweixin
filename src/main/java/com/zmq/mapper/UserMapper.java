@@ -1,6 +1,7 @@
 package com.zmq.mapper;
 
 import com.zmq.pojo.User;
+import com.zmq.pojo.vo.FriendRequestVO;
 import tk.mybatis.mapper.common.Mapper;
 
 /**
@@ -10,4 +11,5 @@ import tk.mybatis.mapper.common.Mapper;
  * @Date 2020/6/12 13:36
  */
 public interface UserMapper extends Mapper<User> {
+
 }

@@ -1,8 +1,10 @@
 package com.zmq.service;
 
 import com.zmq.enums.SearchFriendsStatusEnum;
+import com.zmq.mapper.FriendsRequestMapper;
 import com.zmq.mapper.MyFriendsMapper;
 import com.zmq.mapper.UserMapper;
+import com.zmq.pojo.FriendsRequest;
 import com.zmq.pojo.MyFriends;
 import com.zmq.pojo.User;
 import com.zmq.utils.FastDFSClient;
@@ -20,6 +22,7 @@ import tk.mybatis.mapper.entity.Example;
 
 import java.io.File;
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 
 /**
@@ -40,6 +43,8 @@ public class UserService {
     private FastDFSClient fastDFSClient;
     @Autowired
     private MyFriendsMapper myFriendsMapper;
+    @Autowired
+    private FriendsRequestMapper friendsRequestMapper;
 
     public User findByUsername(String username) {
         User user = new User();
@@ -64,7 +69,7 @@ public class UserService {
         if(!file.exists()){
             file.mkdir();
         }
-        qrCodeUtils.createQRCode(qrCodePath+fileName, "userId:" + userId);
+        qrCodeUtils.createQRCode(qrCodePath+fileName, "username:" + user.getUsername());
         MultipartFile qrCodeFile = FileUtils.fileToMultipart(qrCodePath+fileName);
         Image image = fastDFSClient.uploadFile(qrCodeFile);
         user.setQrcode(image.getFullPath());
@@ -106,4 +111,21 @@ public class UserService {
         return SearchFriendsStatusEnum.SUCCESS.status;
     }
 
+    /**
+     * 发送好友请求
+     * @param id
+     * @param username
+     */
+    public void sendFriendRequest(String id, String username) {
+        User user = findByUsername(username);
+        FriendsRequest friendsRequest = new FriendsRequest();
+        friendsRequest.setSendUserId(id);
+        friendsRequest.setAcceptUserId(user.getId());
+        FriendsRequest findFriendsRequest = friendsRequestMapper.selectOne(friendsRequest);
+        if(findFriendsRequest==null){
+            friendsRequest.setRequestDateTime(LocalDateTime.now());
+            friendsRequest.setId(Sid.nextShort());
+            friendsRequestMapper.insert(friendsRequest);
+        }
+    }
 }
